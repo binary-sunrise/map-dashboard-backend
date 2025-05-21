@@ -1,0 +1,45 @@
+# File: .gitignore
+# Windows System Files
+.DS_Store
+Thumbs.db
+
+# Direcotories
+__pycache__
+migrations/
+_pycache_
+env/
+venv
+dash_venv/
+*.egg-info/
+*.log
+
+# Local configuration files
+.env
+*.sqlite3
+*.db
+static_root/
+media_root/
+
+# IDE/IEd specific
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Secret files
+.secrets/
+secret.py
+local_settings.py
+
+# Python build artifacts
+build/
+dist/
+*.pyc
+*.pyd
+*.pyo
+*.so
+
+# Test coverage files
+.coverage
+.coverage.*
+.pytest_cache/
