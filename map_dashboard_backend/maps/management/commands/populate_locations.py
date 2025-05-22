@@ -1,69 +1,47 @@
-# map_dashboard_backend/maps/management/commands/populate_locations.py
+from django.contrib.gis.geos import Point, LineString, Polygon
 from django.core.management.base import BaseCommand
-from maps.models import Location
-from django.contrib.gis.geos import Point
-from django.contrib.gis.measure import D
-from datetime import timezone
-import random
 from faker import Faker
+import random
+from maps.models import Location
 
 class Command(BaseCommand):
-    help = 'Populate database with sample geospatial data'
-
-    def add_arguments(self, parser):
-        parser.add_argument(
-            'count',
-            type=int,
-            nargs='?',
-            default=20,
-            help='Number of locations to create (max 100)'
-        )
+    help = "Populates the database with fake location data."
 
     def handle(self, *args, **kwargs):
         fake = Faker()
-        count = min(kwargs['count'], 100)  # Safety limit
-        created = 0
-        
-        # Approximate coordinates for major world cities
-        cities = {
-            'New York': (-74.0060, 40.7128),
-            'London': (-0.1278, 51.5074),
-            '东京': (139.6917, 35.6895),
-            'Paris': (2.3522, 48.8566),
-            'Sydney': (151.2093, -33.8650),
-        }
-        
-        # Create city-center locations
-        for name, (lon, lat) in cities.items():
-            try:
-                Location.objects.create(
-                    name=f"{name} HQ",
-                    description=f"{name} corporate office",
-                    point=Point(lon, lat)
-                )
-                self.stdout.write(self.style.SUCCESS(f'Created {name} HQ'))
-                created += 1
-            except Exception as e:
-                self.stdout.write(self.style.WARNING(f'Skipped {name}: {str(e)}'))
-
-        # Create random locations
-        for i in range(count):
-            city = random.choice(list(cities.keys()))
-            base_lon, base_lat = cities[city]
+        for i in range(100):  # Create 100 random locations
+            name = fake.company()
+            description = fake.text(max_nb_chars=200)
+            
+            # Randomly decide which geometry type to use for this location
+            geometry_type = random.choice(['point', 'linestring', 'polygon'])
             
             try:
-                location = Location.objects.create(
-                    name=f"{city} restaurant {i+1}",
-                    description=fake.sentence(),
-                    point=Point(
-                        base_lon + random.uniform(-0.5, 0.5),  # Create clusters around cities
-                        base_lat + random.uniform(-0.5, 0.5)
-                    )
-                )
-                created += 1
-                if i % 5 == 0:
-                    self.stdout.write(f'Created {i+1}/{count} locations...')
+                if geometry_type == 'point':
+                    latitude = float(fake.latitude())
+                    longitude = float(fake.longitude())
+                    point = Point((longitude, latitude), srid=4326)
+                    Location.objects.create(name=name, description=description, point=point)
+                
+                elif geometry_type == 'linestring':
+                    num_points = random.randint(2, 5)
+                    coords = [(float(fake.longitude()), float(fake.latitude())) for _ in range(num_points)]
+                    linestring = LineString(coords, srid=4326)
+                    Location.objects.create(name=name, description=description, linestring=linestring)
+                
+                elif geometry_type == 'polygon':
+                    num_points = random.randint(4, 7)
+                    coords = [(float(fake.longitude()), float(fake.latitude())) for _ in range(num_points - 1)]
+                    coords.append(coords[0])  # Close the polygon
+                    polygon = Polygon(coords, srid=4326)
+                    if not polygon.valid:
+                        polygon = polygon.buffer(0)
+                    Location.objects.create(name=name, description=description, polygon=polygon)
+                
+                self.stdout.write(self.style.SUCCESS(f'Successfully created location {i+1} with type {geometry_type}.'))
+            
             except Exception as e:
+                self.stdout.write(self.style.ERROR(f'Error creating location {i+1}: {str(e)}'))
                 continue
         
-        self.stdout.write(self.style.SUCCESS(f'Successfully created {created} locations'))
+        self.stdout.write(self.style.SUCCESS('Successfully populated location data.'))
