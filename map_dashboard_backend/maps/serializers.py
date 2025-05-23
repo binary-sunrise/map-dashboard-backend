@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import Location
-
+from django.contrib.gis.geos import Point
 
 class LocationSerializer(serializers.ModelSerializer):
     latitude = serializers.FloatField(write_only=True)

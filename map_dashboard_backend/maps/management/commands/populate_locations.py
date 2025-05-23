@@ -1,47 +1,49 @@
-from django.contrib.gis.geos import Point, LineString, Polygon
+from django.contrib.gis.geos import Point
 from django.core.management.base import BaseCommand
 from faker import Faker
-import random
 from maps.models import Location
 
 class Command(BaseCommand):
     help = "Populates the database with fake location data."
 
-    def handle(self, *args, **kwargs):
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--clear',
+            action='store_true',
+            help='Clear all existing locations before populating',
+        )
+
+    def handle(self, *args, **options):
         fake = Faker()
-        for i in range(100):  # Create 100 random locations
-            name = fake.company()
-            description = fake.text(max_nb_chars=200)
-            
-            # Randomly decide which geometry type to use for this location
-            geometry_type = random.choice(['point', 'linestring', 'polygon'])
-            
+        
+        if options['clear']:
+            self.stdout.write("Clearing existing locations...")
+            Location.objects.all().delete()
+            self.stdout.write(self.style.SUCCESS("Existing data cleared."))
+        
+        num_locations = 100
+        created_count = 0
+        
+        for i in range(num_locations):
             try:
-                if geometry_type == 'point':
-                    latitude = float(fake.latitude())
-                    longitude = float(fake.longitude())
-                    point = Point((longitude, latitude), srid=4326)
-                    Location.objects.create(name=name, description=description, point=point)
+                name = fake.company()
+                description = fake.text(max_nb_chars=200)
+                latitude = float(fake.latitude())
+                longitude = float(fake.longitude())
+                point = Point(longitude, latitude, srid=4326)
                 
-                elif geometry_type == 'linestring':
-                    num_points = random.randint(2, 5)
-                    coords = [(float(fake.longitude()), float(fake.latitude())) for _ in range(num_points)]
-                    linestring = LineString(coords, srid=4326)
-                    Location.objects.create(name=name, description=description, linestring=linestring)
+                Location.objects.create(
+                    name=name,
+                    description=description,
+                    point=point
+                )
+                created_count += 1
+                self.stdout.write(f"Created location {i+1}: {name}")
                 
-                elif geometry_type == 'polygon':
-                    num_points = random.randint(4, 7)
-                    coords = [(float(fake.longitude()), float(fake.latitude())) for _ in range(num_points - 1)]
-                    coords.append(coords[0])  # Close the polygon
-                    polygon = Polygon(coords, srid=4326)
-                    if not polygon.valid:
-                        polygon = polygon.buffer(0)
-                    Location.objects.create(name=name, description=description, polygon=polygon)
-                
-                self.stdout.write(self.style.SUCCESS(f'Successfully created location {i+1} with type {geometry_type}.'))
-            
             except Exception as e:
-                self.stdout.write(self.style.ERROR(f'Error creating location {i+1}: {str(e)}'))
+                self.stdout.write(self.style.ERROR(f"Error creating location {i+1}: {str(e)}"))
                 continue
         
-        self.stdout.write(self.style.SUCCESS('Successfully populated location data.'))
+        self.stdout.write(
+            self.style.SUCCESS(f"Created {created_count}/{num_locations} locations.")
+        )
