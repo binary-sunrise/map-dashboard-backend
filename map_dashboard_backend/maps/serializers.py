@@ -1,15 +1,15 @@
-from rest_framework import serializers
+from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from .models import Location
 from django.contrib.gis.geos import Point
 
-class LocationSerializer(serializers.ModelSerializer):
+class LocationSerializer(GeoFeatureModelSerializer):
     latitude = serializers.FloatField(write_only=True)
     longitude = serializers.FloatField(write_only=True)
     
     class Meta:
         model = Location
-        fields = ['id', 'name', 'description', 'point', 'latitude', 'longitude']
-        read_only_fields = ['point']
+        geo_field = "point"
+        fields = ['id', 'name', 'description', 'latitude', 'longitude']
     
     def create(self, validated_data):
         latitude = validated_data.pop('latitude')

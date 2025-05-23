@@ -4,7 +4,7 @@ django-cors-headers==4.7.0
 django-filter==25.1
 djangorestframework==3.16.0
 Faker==37.3.0
-GDAL @ file:///C:/Users/abhay/Downloads/gdal-3.10.2-cp312-cp312-win_amd64.whl#sha256=720e9e45d057231d990aa536c41dd2bd96a97e93a3edde10fff5321b3496388b
+GDAL @ https://github.com/cgohlke/geospatial-wheels/releases/download/v2025.3.30/gdal-3.10.2-cp312-cp312-win_amd64.whl
 psycopg2-binary==2.9.10
 sqlparse==0.5.3
 tzdata==2025.2
