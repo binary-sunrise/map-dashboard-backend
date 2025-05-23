@@ -1,3 +1,4 @@
+from rest_framework import serializers
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
 from .models import Location
 from django.contrib.gis.geos import Point

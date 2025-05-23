@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import (LocationViewSet,LocationBBoxFilterView,LocationIntersectionView,NearestLocationsView)
+from .views import (LocationViewSet,LocationBBoxFilterView,NearestLocationsView)
 
 router = DefaultRouter()
 router.register(r'locations', LocationViewSet)
